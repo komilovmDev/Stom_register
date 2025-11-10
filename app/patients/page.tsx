@@ -211,7 +211,7 @@ export default function PatientsPage() {
   }
 
   const isLoading = false
-  const error = null
+  const error: any = null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -536,10 +536,10 @@ export default function PatientsPage() {
                           transition={{ duration: 0.2 }}
                         >
                           <TableCell className="font-medium">
-                            <button
+                              <button
                               onClick={() => handleShowHistory(patient)}
                               className="hover:underline cursor-pointer text-left"
-                              title="Kasallik tarixini ko'rish"
+                              title="Kasallik tarixini ko&apos;rish"
                             >
                               {patient.fullName}
                             </button>
@@ -765,7 +765,7 @@ export default function PatientsPage() {
                 <Textarea
                   id="visitReason"
                   required
-                  placeholder="Masalan: Tish og'rig'i, Tish tozalash, Konsultatsiya..."
+                  placeholder="Masalan: Tish og&apos;rig&apos;i, Tish tozalash, Konsultatsiya..."
                   value={visitReason}
                   onChange={(e) => setVisitReason(e.target.value)}
                   rows={3}
@@ -844,10 +844,10 @@ export default function PatientsPage() {
       {/* Medical History Dialog */}
       <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+            <DialogHeader>
             <DialogTitle>Kasallik tarixi - {visitPatient?.fullName}</DialogTitle>
             <DialogDescription>
-              Bemorning barcha kelishlari va kasalliklari ro'yxati
+              Bemorning barcha kelishlari va kasalliklari ro&apos;yxati
             </DialogDescription>
           </DialogHeader>
           <VisitHistory patientId={visitPatient?.id || ''} patients={patients} />
@@ -863,7 +863,7 @@ function VisitHistory({ patientId, patients }: { patientId: string; patients: Pa
   const patient = patients.find((p) => p.id === patientId)
   const visits = patient?.visits || []
   const isLoading = false
-  const error = null
+  const error: any = null
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('uz-UZ', {
@@ -897,7 +897,7 @@ function VisitHistory({ patientId, patients }: { patientId: string; patients: Pa
     return (
       <div className="text-center py-12">
         <History className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Kasallik tarixi yo'q</h3>
+  <h3 className="text-lg font-semibold mb-2">Kasallik tarixi yo&apos;q</h3>
         <p className="text-muted-foreground">Bu bemor hali hech qachon kelmagan</p>
       </div>
     )
