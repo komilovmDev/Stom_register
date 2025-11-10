@@ -2,21 +2,58 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
+import { motion } from 'framer-motion'
+import { DashboardLayout } from '@/components/dashboard/layout'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Plus, Edit, Trash2, UserPlus, Search, Users } from 'lucide-react'
 import { Patient, CreatePatientPayload, UpdatePatientPayload, PatientsResponse } from '@/types/api'
+import { useToast } from '@/hooks/use-toast'
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to fetch' }))
+    throw new Error(error.error || 'Failed to fetch patients')
+  }
+  return res.json()
+}
 
 export default function PatientsPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null)
-  const [showEditModal, setShowEditModal] = useState(false)
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deletingPatientId, setDeletingPatientId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     fullName: '',
     birthDate: '',
     address: '',
   })
-  const [successMessage, setSuccessMessage] = useState('')
+  const { toast } = useToast()
 
   const limit = 10
   const searchParams = new URLSearchParams({
@@ -47,47 +84,29 @@ export default function PatientsPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        alert(error.error || 'Failed to create patient')
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to create patient',
+          variant: 'destructive',
+        })
         return
       }
 
       setFormData({ fullName: '', birthDate: '', address: '' })
-      setSuccessMessage('Patient registered successfully!')
-      setTimeout(() => setSuccessMessage(''), 3000)
+      setShowAddDialog(false)
+      toast({
+        title: 'Success',
+        description: 'Patient registered successfully',
+      })
       mutate()
     } catch (error) {
       console.error('Error creating patient:', error)
-      alert('Failed to create patient')
-    }
-  }
-
-  const handleRegisterVisit = async (patientId: string) => {
-    try {
-      const response = await fetch(`/api/patients/${patientId}/visit`, {
-        method: 'POST',
+      toast({
+        title: 'Error',
+        description: 'Failed to create patient',
+        variant: 'destructive',
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        alert(error.error || 'Failed to register visit')
-        return
-      }
-
-      mutate()
-    } catch (error) {
-      console.error('Error registering visit:', error)
-      alert('Failed to register visit')
     }
-  }
-
-  const handleEdit = (patient: Patient) => {
-    setEditingPatient(patient)
-    setFormData({
-      fullName: patient.fullName,
-      birthDate: patient.birthDate.split('T')[0],
-      address: patient.address,
-    })
-    setShowEditModal(true)
   }
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -109,20 +128,127 @@ export default function PatientsPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        alert(error.error || 'Failed to update patient')
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to update patient',
+          variant: 'destructive',
+        })
         return
       }
 
-      setShowEditModal(false)
+      setShowEditDialog(false)
       setEditingPatient(null)
       setFormData({ fullName: '', birthDate: '', address: '' })
-      setSuccessMessage('Patient updated successfully!')
-      setTimeout(() => setSuccessMessage(''), 3000)
+      toast({
+        title: 'Success',
+        description: 'Patient updated successfully',
+      })
       mutate()
     } catch (error) {
       console.error('Error updating patient:', error)
-      alert('Failed to update patient')
+      toast({
+        title: 'Error',
+        description: 'Failed to update patient',
+        variant: 'destructive',
+      })
     }
+  }
+
+  const handleDelete = async () => {
+    if (!deletingPatientId) return
+
+    try {
+      const response = await fetch(`/api/patients/${deletingPatientId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to delete patient',
+          variant: 'destructive',
+        })
+        return
+      }
+
+      setShowDeleteDialog(false)
+      setDeletingPatientId(null)
+      toast({
+        title: 'Success',
+        description: 'Patient deleted successfully',
+      })
+      mutate()
+    } catch (error) {
+      console.error('Error deleting patient:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to delete patient',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleRegisterVisit = async (patientId: string, currentVisitCount: number) => {
+    try {
+      // Optimistic update
+      mutate(
+        (currentData: PatientsResponse | undefined) => {
+          if (!currentData) return currentData
+          return {
+            ...currentData,
+            patients: currentData.patients.map((p) =>
+              p.id === patientId ? { ...p, visitCount: p.visitCount + 1 } : p
+            ),
+          }
+        },
+        false
+      )
+
+      const response = await fetch(`/api/patients/${patientId}/visit`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        toast({
+          title: 'Error',
+          description: error.error || 'Failed to register visit',
+          variant: 'destructive',
+        })
+        mutate()
+        return
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Visit registered successfully',
+      })
+      mutate()
+    } catch (error) {
+      console.error('Error registering visit:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to register visit',
+        variant: 'destructive',
+      })
+      mutate()
+    }
+  }
+
+  const handleEdit = (patient: Patient) => {
+    setEditingPatient(patient)
+    setFormData({
+      fullName: patient.fullName,
+      birthDate: patient.birthDate.split('T')[0],
+      address: patient.address,
+    })
+    setShowEditDialog(true)
+  }
+
+  const handleDeleteClick = (patientId: string) => {
+    setDeletingPatientId(patientId)
+    setShowDeleteDialog(true)
   }
 
   const formatDate = (dateString: string) => {
@@ -134,241 +260,278 @@ export default function PatientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Patient Registration</h1>
-
-        {successMessage && (
-          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-            {successMessage}
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Patients</h1>
+            <p className="text-muted-foreground">Manage your patient records</p>
           </div>
-        )}
-
-        <div className="bg-white shadow rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Register New Patient</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="fullName"
-                required
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">
-                Birth Date
-              </label>
-              <input
-                type="date"
-                id="birthDate"
-                required
-                value={formData.birthDate}
-                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                Address
-              </label>
-              <textarea
-                id="address"
-                required
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Register Patient
-            </button>
-          </form>
+          <Button onClick={() => setShowAddDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Patient
+          </Button>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="mb-4">
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-              Search by Name
-            </label>
-            <input
-              type="text"
-              id="search"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              placeholder="Enter patient name..."
-              className="block w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-
-          {isLoading && <div className="text-center py-8">Loading...</div>}
-          {error && <div className="text-center py-8 text-red-600">Error loading patients</div>}
-
-          {data && (
-            <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Full Name
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Birth Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Address
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Visits
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {data.patients.map((patient) => (
-                      <tr key={patient.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {patient.fullName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(patient.birthDate)}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {patient.address}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {patient.visitCount}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          <button
-                            onClick={() => handleRegisterVisit(patient.id)}
-                            className="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
-                          >
-                            Register Visit
-                          </button>
-                          <button
-                            onClick={() => handleEdit(patient)}
-                            className="text-green-600 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 rounded px-2 py-1"
-                          >
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <Card>
+          <CardHeader>
+            <CardTitle>Patient List</CardTitle>
+            <CardDescription>Search and manage your patients</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by name..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value)
+                    setPage(1)
+                  }}
+                  className="pl-8 max-w-sm"
+                />
               </div>
+            </div>
 
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Showing {(page - 1) * limit + 1} to {Math.min(page * limit, data.pagination.total)} of{' '}
-                  {data.pagination.total} patients
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setPage((p) => p + 1)}
-                    disabled={page >= data.pagination.totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
+            {isLoading && (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
               </div>
-            </>
-          )}
-        </div>
+            )}
+
+            {error && (
+              <div className="text-center py-8 text-destructive">
+                Error loading patients: {error.message || 'Unknown error'}
+              </div>
+            )}
+
+            {data && data.patients && data.patients.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No patients found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {search ? 'Try adjusting your search' : 'Get started by adding a new patient'}
+                </p>
+                {!search && (
+                  <Button onClick={() => setShowAddDialog(true)}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add Patient
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {data && data.patients && data.patients.length > 0 && (
+              <>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Full Name</TableHead>
+                        <TableHead>Birth Date</TableHead>
+                        <TableHead>Address</TableHead>
+                        <TableHead>Visits</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.patients.map((patient) => (
+                        <motion.tr
+                          key={patient.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <TableCell className="font-medium">{patient.fullName}</TableCell>
+                          <TableCell>{formatDate(patient.birthDate)}</TableCell>
+                          <TableCell className="max-w-xs truncate">{patient.address}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{patient.visitCount}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRegisterVisit(patient.id, patient.visitCount)}
+                              >
+                                <UserPlus className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(patient)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteClick(patient.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </motion.tr>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {data.pagination && (
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {(page - 1) * limit + 1} to {Math.min(page * limit, data.pagination.total)} of{' '}
+                      {data.pagination.total} patients
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => p + 1)}
+                        disabled={page >= data.pagination.totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {showEditModal && editingPatient && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-bold mb-4">Edit Patient</h3>
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div>
-                <label htmlFor="editFullName" className="block text-sm font-medium text-gray-700">
-                  Full Name
-                </label>
-                <input
-                  type="text"
+      {/* Add Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Patient</DialogTitle>
+            <DialogDescription>Enter the patient information below</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  required
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="birthDate">Birth Date</Label>
+                <Input
+                  id="birthDate"
+                  type="date"
+                  required
+                  value={formData.birthDate}
+                  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="address">Address</Label>
+                <Textarea
+                  id="address"
+                  required
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Add Patient</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Patient</DialogTitle>
+            <DialogDescription>Update the patient information below</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdate}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="editFullName">Full Name</Label>
+                <Input
                   id="editFullName"
                   required
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <label htmlFor="editBirthDate" className="block text-sm font-medium text-gray-700">
-                  Birth Date
-                </label>
-                <input
-                  type="date"
+              <div className="grid gap-2">
+                <Label htmlFor="editBirthDate">Birth Date</Label>
+                <Input
                   id="editBirthDate"
+                  type="date"
                   required
                   value={formData.birthDate}
                   onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div>
-                <label htmlFor="editAddress" className="block text-sm font-medium text-gray-700">
-                  Address
-                </label>
-                <textarea
+              <div className="grid gap-2">
+                <Label htmlFor="editAddress">Address</Label>
+                <Textarea
                   id="editAddress"
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
-              <div className="flex space-x-2">
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Update
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false)
-                    setEditingPatient(null)
-                    setFormData({ fullName: '', birthDate: '', address: '' })
-                  }}
-                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Update Patient</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Patient</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this patient? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
   )
 }
-

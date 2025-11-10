@@ -70,3 +70,29 @@ export async function PUT(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await prisma.patient.delete({
+      where: { id: params.id },
+    })
+
+    return NextResponse.json({ message: 'Patient deleted successfully' })
+  } catch (error: any) {
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Patient not found' },
+        { status: 404 }
+      )
+    }
+
+    console.error('Error deleting patient:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete patient' },
+      { status: 500 }
+    )
+  }
+}
+
