@@ -1,6 +1,7 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/layout'
+import { ProtectedRoute } from '@/components/protected-route'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -10,7 +11,8 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <DashboardLayout>
+    <ProtectedRoute>
+      <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Settings</h1>
@@ -67,6 +69,7 @@ export default function SettingsPage() {
         </Card>
       </div>
     </DashboardLayout>
+    </ProtectedRoute>
   )
 }
 

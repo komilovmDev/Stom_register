@@ -1,22 +1,34 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/layout'
+import { ProtectedRoute } from '@/components/protected-route'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Activity, TrendingUp, Calendar } from 'lucide-react'
-import useSWR from 'swr'
-import { PatientsResponse } from '@/types/api'
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export default function DashboardPage() {
-  const { data: patientsData } = useSWR<PatientsResponse>('/api/patients?page=1&limit=1000', fetcher)
+  // Get data from localStorage
+  const getPatientsData = () => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('patients')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {
+          return []
+        }
+      }
+    }
+    return []
+  }
 
-  const totalPatients = patientsData?.pagination?.total || 0
-  const totalVisits = patientsData?.patients?.reduce((sum, p) => sum + p.visitCount, 0) || 0
+  const patients = getPatientsData()
+  const totalPatients = patients.length
+  const totalVisits = patients.reduce((sum: number, p: any) => sum + (p.visitCount || 0), 0)
   const avgVisits = totalPatients > 0 ? (totalVisits / totalPatients).toFixed(1) : 0
 
   return (
-    <DashboardLayout>
+    <ProtectedRoute>
+      <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -82,6 +94,7 @@ export default function DashboardPage() {
         </Card>
       </div>
     </DashboardLayout>
+    </ProtectedRoute>
   )
 }
 

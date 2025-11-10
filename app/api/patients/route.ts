@@ -7,13 +7,31 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createPatientSchema.parse(body)
 
-    const patient = await prisma.patient.create({
-      data: {
-        fullName: validatedData.fullName,
-        birthDate: new Date(validatedData.birthDate),
-        address: validatedData.address,
-      },
-    })
+    // Create patient and initial visit in a transaction
+    const [patient] = await Promise.all([
+      prisma.patient.create({
+        data: {
+          fullName: validatedData.fullName,
+          birthDate: new Date(validatedData.birthDate),
+          address: validatedData.address,
+          visitCount: 1, // Set initial visit count
+          visits: {
+            create: {
+              reason: 'Ro\'yxatdan o\'tish / Birinchi konsultatsiya',
+              visitDate: new Date(),
+            },
+          },
+        },
+        include: {
+          visits: {
+            orderBy: {
+              visitDate: 'desc',
+            },
+            take: 1,
+          },
+        },
+      }),
+    ])
 
     return NextResponse.json(patient, { status: 201 })
   } catch (error: any) {
@@ -25,8 +43,33 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Error creating patient:', error)
+    
+    // Check for database connection errors
+    if (error.code === 'P1001' || error.message?.includes('Can\'t reach database server')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection failed. Please check your DATABASE_URL in .env file',
+          details: 'Make sure PostgreSQL is running and DATABASE_URL is correctly configured'
+        },
+        { status: 503 }
+      )
+    }
+    
+    if (error.code === 'P1017' || error.message?.includes('Connection closed')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection closed',
+          details: 'Please check your database connection settings'
+        },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create patient' },
+      { 
+        error: 'Failed to create patient',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }
@@ -58,6 +101,14 @@ export async function GET(request: NextRequest) {
         orderBy: {
           createdAt: 'desc',
         },
+        include: {
+          visits: {
+            orderBy: {
+              visitDate: 'desc',
+            },
+            take: 3, // Get last 3 visits for each patient
+          },
+        },
       }),
       prisma.patient.count({ where }),
     ])
@@ -71,10 +122,35 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching patients:', error)
+    
+    // Check for database connection errors
+    if (error.code === 'P1001' || error.message?.includes('Can\'t reach database server')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection failed. Please check your DATABASE_URL in .env file',
+          details: 'Make sure PostgreSQL is running and DATABASE_URL is correctly configured'
+        },
+        { status: 503 }
+      )
+    }
+    
+    if (error.code === 'P1017' || error.message?.includes('Connection closed')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection closed',
+          details: 'Please check your database connection settings'
+        },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch patients' },
+      { 
+        error: 'Failed to fetch patients',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }

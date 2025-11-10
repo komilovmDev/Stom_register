@@ -12,6 +12,18 @@ export const updatePatientSchema = z.object({
   address: z.string().min(1, 'Address is required').max(500, 'Address is too long').optional(),
 })
 
+export const createVisitSchema = z.object({
+  reason: z.string().min(1, 'Kasallik nomi yoki kelish sababi kiritilishi kerak').max(500, 'Sabab juda uzun'),
+  visitDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD').optional(),
+})
+
+export const updateVisitSchema = z.object({
+  reason: z.string().min(1, 'Kasallik nomi yoki kelish sababi kiritilishi kerak').max(500, 'Sabab juda uzun').optional(),
+  visitDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD').optional(),
+})
+
 export type CreatePatientInput = z.infer<typeof createPatientSchema>
 export type UpdatePatientInput = z.infer<typeof updatePatientSchema>
+export type CreateVisitInput = z.infer<typeof createVisitSchema>
+export type UpdateVisitInput = z.infer<typeof updateVisitSchema>
 

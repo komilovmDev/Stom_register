@@ -1,77 +1,93 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/layout'
+import { ProtectedRoute } from '@/components/protected-route'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import useSWR from 'swr'
-import { PatientsResponse } from '@/types/api'
 import { TrendingUp, Users, Activity } from 'lucide-react'
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json())
-
 export default function ReportsPage() {
-  const { data, error, isLoading } = useSWR<PatientsResponse>(
-    '/api/patients?page=1&limit=1000',
-    fetcher
-  )
+  // Get data from localStorage
+  const getPatientsData = () => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('patients')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {
+          return []
+        }
+      }
+    }
+    return []
+  }
 
-  const topPatients = data?.patients
-    ?.sort((a, b) => b.visitCount - a.visitCount)
-    .slice(0, 5) || []
+  const patients = getPatientsData()
+  const isLoading = false
+  const error = null
 
-  const chartData = topPatients.map((patient) => ({
+  const topPatients = patients
+    .sort((a: any, b: any) => b.visitCount - a.visitCount)
+    .slice(0, 5)
+
+  const chartData = topPatients.map((patient: any) => ({
     name: patient.fullName.split(' ')[0] + ' ' + (patient.fullName.split(' ')[1]?.[0] || ''),
     visits: patient.visitCount,
   }))
 
-  const totalPatients = data?.pagination?.total || 0
-  const totalVisits = data?.patients?.reduce((sum, p) => sum + p.visitCount, 0) || 0
+  const totalPatients = patients.length
+  const totalVisits = patients.reduce((sum: number, p: any) => sum + (p.visitCount || 0), 0)
 
   if (isLoading) {
     return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Reports</h1>
-            <p className="text-muted-foreground">View patient statistics and analytics</p>
+      <ProtectedRoute>
+        <DashboardLayout>
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold">Reports</h1>
+              <p className="text-muted-foreground">View patient statistics and analytics</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-64 w-full" />
+                </CardContent>
+              </Card>
+            </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-64 w-full" />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </DashboardLayout>
+        </DashboardLayout>
+      </ProtectedRoute>
     )
   }
 
   if (error) {
     return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Reports</h1>
-            <p className="text-muted-foreground">View patient statistics and analytics</p>
+      <ProtectedRoute>
+        <DashboardLayout>
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold">Reports</h1>
+              <p className="text-muted-foreground">View patient statistics and analytics</p>
+            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-destructive">Error loading reports</p>
+              </CardContent>
+            </Card>
           </div>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-destructive">Error loading reports</p>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
+        </DashboardLayout>
+      </ProtectedRoute>
     )
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <ProtectedRoute>
+      <DashboardLayout>
+        <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Reports</h1>
           <p className="text-muted-foreground">View patient statistics and analytics</p>
@@ -168,8 +184,9 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </DashboardLayout>
+        </div>
+      </DashboardLayout>
+    </ProtectedRoute>
   )
 }
 
