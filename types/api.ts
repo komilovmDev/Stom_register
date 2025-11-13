@@ -3,6 +3,7 @@ export interface Patient {
   fullName: string
   birthDate: string
   address: string
+  phone?: string
   visitCount: number
   createdAt: string
   updatedAt: string
@@ -13,12 +14,14 @@ export interface CreatePatientPayload {
   fullName: string
   birthDate: string
   address: string
+  phone?: string
 }
 
 export interface UpdatePatientPayload {
   fullName?: string
   birthDate?: string
   address?: string
+  phone?: string
 }
 
 export interface Visit {

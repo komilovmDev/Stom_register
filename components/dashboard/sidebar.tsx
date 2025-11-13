@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Patients', href: '/patients', icon: Users },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Boshqaruv paneli', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Bemorlar', href: '/patients', icon: Users },
+  { name: 'Hisobotlar', href: '/reports', icon: BarChart3 },
+  { name: 'Sozlamalar', href: '/settings', icon: Settings },
 ]
 
 const isActivePath = (pathname: string | null, href: string) => {

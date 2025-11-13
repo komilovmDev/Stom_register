@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Plus, Edit, Trash2, UserPlus, Search, Users, Minus, Hash, History, Calendar } from 'lucide-react'
+import { Plus, Edit, Trash2, UserPlus, Search, Users, Minus, Hash, History, Calendar, Phone, MapPin, User } from 'lucide-react'
 import { Patient, CreatePatientPayload, UpdatePatientPayload, PatientsResponse, Visit, CreateVisitPayload, VisitsResponse } from '@/types/api'
 import { useToast } from '@/hooks/use-toast'
 import { ProtectedRoute } from '@/components/protected-route'
@@ -159,7 +159,7 @@ export default function PatientsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showVisitDialog, setShowVisitDialog] = useState(false)
   const [showEditVisitDialog, setShowEditVisitDialog] = useState(false)
-  const [showHistoryDialog, setShowHistoryDialog] = useState(false)
+  const [showPatientProfileDialog, setShowPatientProfileDialog] = useState(false)
   const [deletingPatientId, setDeletingPatientId] = useState<string | null>(null)
   const [visitPatient, setVisitPatient] = useState<Patient | null>(null)
   const [visitCount, setVisitCount] = useState<number>(0)
@@ -169,6 +169,7 @@ export default function PatientsPage() {
     fullName: '',
     birthDate: '',
     address: '',
+    phone: '',
   })
   const { toast } = useToast()
 
@@ -186,7 +187,9 @@ export default function PatientsPage() {
     let filtered = patients
     if (search) {
       filtered = patients.filter((p) =>
-        p.fullName.toLowerCase().includes(search.toLowerCase())
+        p.fullName.toLowerCase().includes(search.toLowerCase()) ||
+        p.phone?.includes(search) ||
+        p.address.toLowerCase().includes(search.toLowerCase())
       )
     }
     return filtered
@@ -216,11 +219,13 @@ export default function PatientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const phoneValue = formData.phone ? `+998${formData.phone}` : undefined
       const newPatient: Patient = {
         id: generateId(),
         fullName: formData.fullName,
         birthDate: formData.birthDate,
         address: formData.address,
+        phone: phoneValue,
         visitCount: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -237,17 +242,17 @@ export default function PatientsPage() {
       }
 
       setPatients([newPatient, ...patients])
-      setFormData({ fullName: '', birthDate: '', address: '' })
+      setFormData({ fullName: '', birthDate: '', address: '', phone: '' })
       setShowAddDialog(false)
       toast({
-        title: 'Success',
-        description: 'Patient registered successfully',
+        title: 'Muvaffaqiyatli',
+        description: 'Bemor muvaffaqiyatli ro\'yxatga olindi',
       })
     } catch (error) {
       console.error('Error creating patient:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to create patient',
+        title: 'Xatolik',
+        description: 'Bemorni yaratishda xatolik yuz berdi',
         variant: 'destructive',
       })
     }
@@ -266,6 +271,7 @@ export default function PatientsPage() {
                 fullName: formData.fullName,
                 birthDate: formData.birthDate,
                 address: formData.address,
+                phone: formData.phone ? `+998${formData.phone}` : undefined,
                 updatedAt: new Date().toISOString(),
               }
             : p
@@ -274,16 +280,16 @@ export default function PatientsPage() {
 
       setShowEditDialog(false)
       setEditingPatient(null)
-      setFormData({ fullName: '', birthDate: '', address: '' })
+      setFormData({ fullName: '', birthDate: '', address: '', phone: '' })
       toast({
-        title: 'Success',
-        description: 'Patient updated successfully',
+        title: 'Muvaffaqiyatli',
+        description: 'Bemor ma\'lumotlari muvaffaqiyatli yangilandi',
       })
     } catch (error) {
       console.error('Error updating patient:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to update patient',
+        title: 'Xatolik',
+        description: 'Bemor ma\'lumotlarini yangilashda xatolik yuz berdi',
         variant: 'destructive',
       })
     }
@@ -297,14 +303,14 @@ export default function PatientsPage() {
       setShowDeleteDialog(false)
       setDeletingPatientId(null)
       toast({
-        title: 'Success',
-        description: 'Patient deleted successfully',
+        title: 'Muvaffaqiyatli',
+        description: 'Bemor muvaffaqiyatli o\'chirildi',
       })
     } catch (error) {
       console.error('Error deleting patient:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to delete patient',
+        title: 'Xatolik',
+        description: 'Bemorni o\'chirishda xatolik yuz berdi',
         variant: 'destructive',
       })
     }
@@ -318,7 +324,7 @@ export default function PatientsPage() {
   const handleRegisterVisit = async () => {
     if (!visitPatient || !visitReason.trim()) {
       toast({
-        title: 'Error',
+        title: 'Xatolik',
         description: 'Kasallik nomi yoki kelish sababi kiritilishi kerak',
         variant: 'destructive',
       })
@@ -353,22 +359,22 @@ export default function PatientsPage() {
       setVisitReason('')
       setVisitDate('')
       toast({
-        title: 'Success',
-        description: 'Visit registered successfully',
+        title: 'Muvaffaqiyatli',
+        description: 'Kelish muvaffaqiyatli ro\'yxatga olindi',
       })
     } catch (error) {
       console.error('Error registering visit:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to register visit',
+        title: 'Xatolik',
+        description: 'Kelishni ro\'yxatga olishda xatolik yuz berdi',
         variant: 'destructive',
       })
     }
   }
 
-  const handleShowHistory = (patient: Patient) => {
+  const handleShowPatientProfile = (patient: Patient) => {
     setVisitPatient(patient)
-    setShowHistoryDialog(true)
+    setShowPatientProfileDialog(true)
   }
 
   const handleEditVisitClick = (patient: Patient) => {
@@ -397,14 +403,14 @@ export default function PatientsPage() {
       setVisitPatient(null)
       setVisitCount(0)
       toast({
-        title: 'Success',
-        description: 'Visit count updated successfully',
+        title: 'Muvaffaqiyatli',
+        description: 'Kelishlar soni muvaffaqiyatli yangilandi',
       })
     } catch (error) {
       console.error('Error updating visit count:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to update visit count',
+        title: 'Xatolik',
+        description: 'Kelishlar sonini yangilashda xatolik yuz berdi',
         variant: 'destructive',
       })
     }
@@ -412,10 +418,13 @@ export default function PatientsPage() {
 
   const handleEdit = (patient: Patient) => {
     setEditingPatient(patient)
+    // Telefon raqamidan +998 ni olib tashlash
+    const phoneWithoutPrefix = patient.phone?.replace(/^\+998/, '') || ''
     setFormData({
       fullName: patient.fullName,
       birthDate: patient.birthDate.split('T')[0],
       address: patient.address,
+      phone: phoneWithoutPrefix,
     })
     setShowEditDialog(true)
   }
@@ -436,22 +445,22 @@ export default function PatientsPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Patients</h1>
-            <p className="text-muted-foreground">Manage your patient records</p>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Bemorlar</h1>
+                <p className="text-muted-foreground">Bemorlar ro'yxatini boshqaring</p>
+              </div>
+              <Button onClick={() => setShowAddDialog(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Yangi bemor qo'shish
+              </Button>
           </div>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Patient
-          </Button>
-        </div>
 
-        <Card>
+          <Card>
           <CardHeader>
-            <CardTitle>Patient List</CardTitle>
-            <CardDescription>Search and manage your patients</CardDescription>
+            <CardTitle>Bemorlar ro'yxati</CardTitle>
+            <CardDescription>Bemorlarni qidiring va boshqaring</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
@@ -459,7 +468,7 @@ export default function PatientsPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by name..."
+                  placeholder="Ism, telefon yoki manzil bo'yicha qidiring..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value)
@@ -481,17 +490,17 @@ export default function PatientsPage() {
             {error && (
               <div className="text-center py-8">
                 <div className="text-destructive font-semibold mb-2">
-                  Error loading patients: {error.message || 'Unknown error'}
+                  Bemorlarni yuklashda xatolik: {error.message || 'Noma'lum xatolik'}
                 </div>
                 {error.message?.includes('Database connection') && (
                   <div className="text-sm text-muted-foreground space-y-2 mt-4">
-                    <p>Please check:</p>
+                    <p>Iltimos, tekshiring:</p>
                     <ul className="list-disc list-inside space-y-1">
-                      <li>Create a <code className="bg-muted px-1 rounded">.env</code> file in the root directory</li>
-                      <li>Add <code className="bg-muted px-1 rounded">DATABASE_URL</code> with your PostgreSQL connection string</li>
-                      <li>Make sure PostgreSQL is running</li>
-                      <li>Run <code className="bg-muted px-1 rounded">npm run db:migrate</code> to set up the database</li>
-                      <li>Run <code className="bg-muted px-1 rounded">npm run db:generate</code> to generate Prisma client</li>
+                      <li>Asosiy papkada <code className="bg-muted px-1 rounded">.env</code> faylini yarating</li>
+                      <li>PostgreSQL ulanish stringini bilan <code className="bg-muted px-1 rounded">DATABASE_URL</code> qo'shing</li>
+                      <li>PostgreSQL ishlayotganligiga ishonch hosil qiling</li>
+                      <li>Ma'lumotlar bazasini sozlash uchun <code className="bg-muted px-1 rounded">npm run db:migrate</code> ni ishga tushiring</li>
+                      <li>Prisma client'ni yaratish uchun <code className="bg-muted px-1 rounded">npm run db:generate</code> ni ishga tushiring</li>
                     </ul>
                   </div>
                 )}
@@ -501,14 +510,14 @@ export default function PatientsPage() {
             {data && data.patients && data.patients.length === 0 && (
               <div className="text-center py-12">
                 <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No patients found</h3>
+                <h3 className="text-lg font-semibold mb-2">Bemorlar topilmadi</h3>
                 <p className="text-muted-foreground mb-4">
-                  {search ? 'Try adjusting your search' : 'Get started by adding a new patient'}
+                  {search ? 'Qidiruvni o\'zgartiring' : 'Yangi bemor qo\'shish orqali boshlang'}
                 </p>
                 {!search && (
                   <Button onClick={() => setShowAddDialog(true)}>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Add Patient
+                    Bemor qo'shish
                   </Button>
                 )}
               </div>
@@ -520,11 +529,12 @@ export default function PatientsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Full Name</TableHead>
-                        <TableHead>Birth Date</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead>Visits</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>To'liq ism</TableHead>
+                        <TableHead>Tug'ilgan sana</TableHead>
+                        <TableHead>Telefon</TableHead>
+                        <TableHead>Manzil</TableHead>
+                        <TableHead>Kelishlar</TableHead>
+                        <TableHead className="text-right">Amallar</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -534,19 +544,16 @@ export default function PatientsPage() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.2 }}
+                          onClick={() => handleShowPatientProfile(patient)}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
                         >
                           <TableCell className="font-medium">
-                              <button
-                              onClick={() => handleShowHistory(patient)}
-                              className="hover:underline cursor-pointer text-left"
-                              title="Kasallik tarixini ko&apos;rish"
-                            >
-                              {patient.fullName}
-                            </button>
+                            {patient.fullName}
                           </TableCell>
                           <TableCell>{formatDate(patient.birthDate)}</TableCell>
+                          <TableCell>{patient.phone || '-'}</TableCell>
                           <TableCell className="max-w-xs truncate">{patient.address}</TableCell>
-                          <TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">{patient.visitCount}</Badge>
                               <Button
@@ -554,19 +561,19 @@ export default function PatientsPage() {
                                 size="sm"
                                 onClick={() => handleEditVisitClick(patient)}
                                 className="h-6 w-6 p-0"
-                                title="Edit visit count"
+                                title="Kelishlar sonini tahrirlash"
                               >
                                 <Hash className="h-3 w-3" />
                               </Button>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-end gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleRegisterVisitClick(patient)}
-                                title="Add visit"
+                                title="Kelish qo'shish"
                               >
                                 <UserPlus className="h-4 w-4" />
                               </Button>
@@ -574,7 +581,7 @@ export default function PatientsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEdit(patient)}
-                                title="Edit patient"
+                                title="Bemorni tahrirlash"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -582,7 +589,7 @@ export default function PatientsPage() {
                                 variant="destructive"
                                 size="sm"
                                 onClick={() => handleDeleteClick(patient.id)}
-                                title="Delete patient"
+                                title="Bemorni o'chirish"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -597,8 +604,8 @@ export default function PatientsPage() {
                 {data.pagination && (
                   <div className="mt-4 flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      Showing {(page - 1) * limit + 1} to {Math.min(page * limit, data.pagination.total)} of{' '}
-                      {data.pagination.total} patients
+                      {(page - 1) * limit + 1} dan {Math.min(page * limit, data.pagination.total)} gacha, jami{' '}
+                      {data.pagination.total} ta bemor
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -607,7 +614,7 @@ export default function PatientsPage() {
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1}
                       >
-                        Previous
+                        Oldingi
                       </Button>
                       <Button
                         variant="outline"
@@ -615,7 +622,7 @@ export default function PatientsPage() {
                         onClick={() => setPage((p) => p + 1)}
                         disabled={page >= data.pagination.totalPages}
                       >
-                        Next
+                        Keyingi
                       </Button>
                     </div>
                   </div>
@@ -624,19 +631,19 @@ export default function PatientsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
 
-      {/* Add Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        {/* Add Dialog */}
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Patient</DialogTitle>
-            <DialogDescription>Enter the patient information below</DialogDescription>
+            <DialogTitle>Yangi bemor qo'shish</DialogTitle>
+            <DialogDescription>Quyida bemor ma'lumotlarini kiriting</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">To'liq ism</Label>
                 <Input
                   id="fullName"
                   required
@@ -645,7 +652,7 @@ export default function PatientsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="birthDate">Birth Date</Label>
+                <Label htmlFor="birthDate">Tug'ilgan sana</Label>
                 <Input
                   id="birthDate"
                   type="date"
@@ -655,7 +662,31 @@ export default function PatientsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="phone">Telefon raqami</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground px-2">+998</span>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="901234567"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      // Faqat raqamlarni qabul qilish
+                      const value = e.target.value.replace(/\D/g, '')
+                      // Maksimal 9 ta raqam
+                      const limitedValue = value.slice(0, 9)
+                      setFormData({ ...formData, phone: limitedValue })
+                    }}
+                    maxLength={9}
+                    className="flex-1"
+                  />
+                </div>
+                {formData.phone && (
+                  <p className="text-xs text-muted-foreground">+998{formData.phone}</p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="address">Manzil</Label>
                 <Textarea
                   id="address"
                   required
@@ -667,9 +698,9 @@ export default function PatientsPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                Cancel
+                Bekor qilish
               </Button>
-              <Button type="submit">Add Patient</Button>
+              <Button type="submit">Bemor qo'shish</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -679,13 +710,13 @@ export default function PatientsPage() {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Patient</DialogTitle>
-            <DialogDescription>Update the patient information below</DialogDescription>
+            <DialogTitle>Bemorni tahrirlash</DialogTitle>
+            <DialogDescription>Quyida bemor ma'lumotlarini yangilang</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdate}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="editFullName">Full Name</Label>
+                <Label htmlFor="editFullName">To'liq ism</Label>
                 <Input
                   id="editFullName"
                   required
@@ -694,7 +725,7 @@ export default function PatientsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="editBirthDate">Birth Date</Label>
+                <Label htmlFor="editBirthDate">Tug'ilgan sana</Label>
                 <Input
                   id="editBirthDate"
                   type="date"
@@ -704,7 +735,31 @@ export default function PatientsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="editAddress">Address</Label>
+                <Label htmlFor="editPhone">Telefon raqami</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground px-2">+998</span>
+                  <Input
+                    id="editPhone"
+                    type="tel"
+                    placeholder="901234567"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      // Faqat raqamlarni qabul qilish
+                      const value = e.target.value.replace(/\D/g, '')
+                      // Maksimal 9 ta raqam
+                      const limitedValue = value.slice(0, 9)
+                      setFormData({ ...formData, phone: limitedValue })
+                    }}
+                    maxLength={9}
+                    className="flex-1"
+                  />
+                </div>
+                {formData.phone && (
+                  <p className="text-xs text-muted-foreground">+998{formData.phone}</p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="editAddress">Manzil</Label>
                 <Textarea
                   id="editAddress"
                   required
@@ -716,9 +771,9 @@ export default function PatientsPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
-                Cancel
+                Bekor qilish
               </Button>
-              <Button type="submit">Update Patient</Button>
+              <Button type="submit">Bemorni yangilash</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -728,17 +783,17 @@ export default function PatientsPage() {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Patient</DialogTitle>
+            <DialogTitle>Bemorni o'chirish</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this patient? This action cannot be undone.
+              Bu bemorni o'chirishni xohlaysizmi? Bu amalni bekor qilib bo'lmaydi.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Cancel
+              Bekor qilish
             </Button>
             <Button type="button" variant="destructive" onClick={handleDelete}>
-              Delete
+              O'chirish
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -748,9 +803,9 @@ export default function PatientsPage() {
       <Dialog open={showVisitDialog} onOpenChange={setShowVisitDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Register Visit</DialogTitle>
+            <DialogTitle>Kelishni ro'yxatga olish</DialogTitle>
             <DialogDescription>
-              Register a new visit for <strong>{visitPatient?.fullName}</strong>
+              <strong>{visitPatient?.fullName}</strong> uchun yangi kelishni ro'yxatga oling
             </DialogDescription>
           </DialogHeader>
           <form
@@ -791,9 +846,9 @@ export default function PatientsPage() {
                   setVisitDate('')
                 }}
               >
-                Cancel
+                Bekor qilish
               </Button>
-              <Button type="submit">Register Visit</Button>
+              <Button type="submit">Kelishni ro'yxatga olish</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -803,15 +858,15 @@ export default function PatientsPage() {
       <Dialog open={showEditVisitDialog} onOpenChange={setShowEditVisitDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Visit Count</DialogTitle>
+            <DialogTitle>Kelishlar sonini tahrirlash</DialogTitle>
             <DialogDescription>
-              Update the visit count for <strong>{visitPatient?.fullName}</strong>. Current count:{' '}
+              <strong>{visitPatient?.fullName}</strong> uchun kelishlar sonini yangilang. Joriy son:{' '}
               <strong>{visitPatient?.visitCount}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="visitCount">Visit Count</Label>
+              <Label htmlFor="visitCount">Kelishlar soni</Label>
               <Input
                 id="visitCount"
                 type="number"
@@ -832,28 +887,113 @@ export default function PatientsPage() {
                 setVisitCount(0)
               }}
             >
-              Cancel
+              Bekor qilish
             </Button>
             <Button type="button" onClick={handleUpdateVisitCount}>
-              Update Visit Count
+              Kelishlar sonini yangilash
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Medical History Dialog */}
-      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-            <DialogTitle>Kasallik tarixi - {visitPatient?.fullName}</DialogTitle>
+      {/* Patient Profile Dialog */}
+      <Dialog open={showPatientProfileDialog} onOpenChange={setShowPatientProfileDialog}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Bemor Profili</DialogTitle>
             <DialogDescription>
-              Bemorning barcha kelishlari va kasalliklari ro&apos;yxati
+              Bemorning barcha ma&apos;lumotlari va kasallik tarixi
             </DialogDescription>
           </DialogHeader>
-          <VisitHistory patientId={visitPatient?.id || ''} patients={patients} />
+          
+          {visitPatient && (
+            <div className="space-y-6 py-4">
+              {/* Patient Information Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Shaxsiy Ma&apos;lumotlar
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">To&apos;liq Ism</Label>
+                      <p className="text-base font-medium">{visitPatient.fullName}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Tug&apos;ilgan sana
+                      </Label>
+                      <p className="text-base font-medium">{formatDate(visitPatient.birthDate)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        Telefon raqami
+                      </Label>
+                      <p className="text-base font-medium">{visitPatient.phone || '-'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Hash className="h-4 w-4" />
+                        Kelishlar soni
+                      </Label>
+                      <p className="text-base font-medium">{visitPatient.visitCount} ta</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Manzil
+                    </Label>
+                    <p className="text-base font-medium">{visitPatient.address}</p>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                      <div>
+                        <span className="font-medium">Yaratilgan:</span>{' '}
+                        {new Date(visitPatient.createdAt).toLocaleDateString('uz-UZ', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </div>
+                      <div>
+                        <span className="font-medium">Yangilangan:</span>{' '}
+                        {new Date(visitPatient.updatedAt).toLocaleDateString('uz-UZ', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Medical History Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Kasallik Tarixi
+                  </CardTitle>
+                  <CardDescription>
+                    Bemorning barcha kelishlari va kasalliklari ro&apos;yxati
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <VisitHistory patientId={visitPatient.id} patients={patients} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+      </DashboardLayout>
     </ProtectedRoute>
   )
 }

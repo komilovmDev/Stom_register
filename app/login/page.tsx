@@ -34,21 +34,21 @@ export default function LoginPage() {
 
       if (success) {
         toast({
-          title: 'Success',
-          description: 'Login successful!',
+        title: 'Muvaffaqiyatli',
+        description: 'Muvaffaqiyatli kirildi!',
         })
         router.push('/dashboard')
       } else {
         toast({
-          title: 'Error',
-          description: 'Invalid username or password',
+        title: 'Xatolik',
+        description: 'Noto\'g\'ri foydalanuvchi nomi yoki parol',
           variant: 'destructive',
         })
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'An error occurred during login',
+        title: 'Xatolik',
+        description: 'Kirish paytida xatolik yuz berdi',
         variant: 'destructive',
       })
     } finally {
@@ -65,21 +65,21 @@ export default function LoginPage() {
               <Lock className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Login</CardTitle>
+          <CardTitle className="text-2xl font-bold">Kirish</CardTitle>
           <CardDescription>
-            Enter your credentials to access the system
+            Tizimga kirish uchun ma'lumotlaringizni kiriting
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Foydalanuvchi nomi</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Enter username"
+                  placeholder="Foydalanuvchi nomini kiriting"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-9"
@@ -89,13 +89,13 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Parol</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter password"
+                  placeholder="Parolni kiriting"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-9"
@@ -106,18 +106,18 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
-                'Logging in...'
+                'Kirilmoqda...'
               ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
-                  Login
+                  Kirish
                 </>
               )}
             </Button>
           </form>
 
           <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm font-semibold mb-2">Demo Credentials:</p>
+            <p className="text-sm font-semibold mb-2">Demo ma'lumotlar:</p>
             <div className="space-y-1 text-xs text-muted-foreground">
               <p>• Username: <code className="bg-background px-1 rounded">admin</code> / Password: <code className="bg-background px-1 rounded">admin123</code></p>
               <p>• Username: <code className="bg-background px-1 rounded">doctor</code> / Password: <code className="bg-background px-1 rounded">doctor123</code></p>

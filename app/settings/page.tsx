@@ -15,43 +15,43 @@ export default function SettingsPage() {
       <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your application settings</p>
+          <h1 className="text-3xl font-bold">Sozlamalar</h1>
+          <p className="text-muted-foreground">Ilova sozlamalarini boshqaring</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>Customize the appearance of the application</CardDescription>
+            <CardTitle>Ko'rinish</CardTitle>
+            <CardDescription>Ilova ko'rinishini sozlang</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Theme</Label>
+              <Label>Tema</Label>
               <div className="flex gap-2">
                 <Button
                   variant={theme === 'light' ? 'default' : 'outline'}
                   onClick={() => setTheme('light')}
                 >
-                  Light
+                  Yorug'
                 </Button>
                 <Button
                   variant={theme === 'dark' ? 'default' : 'outline'}
                   onClick={() => setTheme('dark')}
                 >
-                  Dark
+                  Qorong'u
                 </Button>
                 <Button
                   variant={theme === 'system' ? 'default' : 'outline'}
                   onClick={() => setTheme('system')}
                 >
-                  System
+                  Tizim
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>About</CardTitle>
             <CardDescription>Information about the application</CardDescription>
@@ -66,7 +66,7 @@ export default function SettingsPage() {
               </p>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </DashboardLayout>
     </ProtectedRoute>

@@ -45,8 +45,8 @@ export default function ReportsPage() {
         <DashboardLayout>
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold">Reports</h1>
-              <p className="text-muted-foreground">View patient statistics and analytics</p>
+              <h1 className="text-3xl font-bold">Hisobotlar</h1>
+              <p className="text-muted-foreground">Bemorlar statistikasi va tahlillarini ko'ring</p>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
@@ -70,12 +70,12 @@ export default function ReportsPage() {
         <DashboardLayout>
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold">Reports</h1>
-              <p className="text-muted-foreground">View patient statistics and analytics</p>
+              <h1 className="text-3xl font-bold">Hisobotlar</h1>
+              <p className="text-muted-foreground">Bemorlar statistikasi va tahlillarini ko'ring</p>
             </div>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-center text-destructive">Error loading reports</p>
+                <p className="text-center text-destructive">Hisobotlarni yuklashda xatolik</p>
               </CardContent>
             </Card>
           </div>
@@ -96,44 +96,44 @@ export default function ReportsPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
+              <CardTitle className="text-sm font-medium">Jami bemorlar</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalPatients}</div>
-              <p className="text-xs text-muted-foreground">Registered patients</p>
+              <p className="text-xs text-muted-foreground">Ro'yxatdan o'tgan bemorlar</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Visits</CardTitle>
+              <CardTitle className="text-sm font-medium">Jami kelishlar</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalVisits}</div>
-              <p className="text-xs text-muted-foreground">All time visits</p>
+              <p className="text-xs text-muted-foreground">Barcha vaqt kelishlari</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Visits</CardTitle>
+              <CardTitle className="text-sm font-medium">O'rtacha kelishlar</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {totalPatients > 0 ? (totalVisits / totalPatients).toFixed(1) : 0}
               </div>
-              <p className="text-xs text-muted-foreground">Per patient</p>
+              <p className="text-xs text-muted-foreground">Har bir bemor uchun</p>
             </CardContent>
           </Card>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Top 5 Most Frequent Patients</CardTitle>
-            <CardDescription>Patients with the highest visit counts</CardDescription>
+            <CardTitle>Eng ko'p kelgan 5 ta bemor</CardTitle>
+            <CardDescription>Eng ko'p kelishlar soniga ega bemorlar</CardDescription>
           </CardHeader>
           <CardContent>
             {topPatients.length > 0 ? (
@@ -149,7 +149,7 @@ export default function ReportsPage() {
               </ResponsiveContainer>
             ) : (
               <div className="text-center py-12 text-muted-foreground">
-                No patient data available
+                Bemor ma'lumotlari mavjud emas
               </div>
             )}
           </CardContent>
@@ -158,8 +158,8 @@ export default function ReportsPage() {
         {topPatients.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Patient List</CardTitle>
-              <CardDescription>Top patients by visit count</CardDescription>
+              <CardTitle>Bemorlar ro'yxati</CardTitle>
+              <CardDescription>Kelishlar soni bo'yicha eng yaxshi bemorlar</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -176,7 +176,7 @@ export default function ReportsPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold">{patient.visitCount}</p>
-                      <p className="text-xs text-muted-foreground">visits</p>
+                      <p className="text-xs text-muted-foreground">kelish</p>
                     </div>
                   </div>
                 ))}

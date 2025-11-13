@@ -40,6 +40,7 @@ export async function PUT(
     if (validatedData.fullName) updateData.fullName = validatedData.fullName
     if (validatedData.birthDate) updateData.birthDate = new Date(validatedData.birthDate)
     if (validatedData.address) updateData.address = validatedData.address
+    if (validatedData.phone !== undefined) updateData.phone = validatedData.phone
 
     const patient = await prisma.patient.update({
       where: { id: params.id },

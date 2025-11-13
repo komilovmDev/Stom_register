@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
           fullName: validatedData.fullName,
           birthDate: new Date(validatedData.birthDate),
           address: validatedData.address,
+          phone: validatedData.phone,
           visitCount: 1, // Set initial visit count
           visits: {
             create: {
@@ -86,10 +87,25 @@ export async function GET(request: NextRequest) {
 
     const where = search
       ? {
-          fullName: {
-            contains: search,
-            mode: 'insensitive' as const,
-          },
+          OR: [
+            {
+              fullName: {
+                contains: search,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              phone: {
+                contains: search,
+              },
+            },
+            {
+              address: {
+                contains: search,
+                mode: 'insensitive' as const,
+              },
+            },
+          ],
         }
       : {}
 
