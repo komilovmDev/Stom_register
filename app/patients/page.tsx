@@ -447,280 +447,280 @@ export default function PatientsPage() {
       <DashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold">Bemorlar</h1>
-                <p className="text-muted-foreground">Bemorlar ro'yxatini boshqaring</p>
-              </div>
-              <Button onClick={() => setShowAddDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Yangi bemor qo'shish
-              </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Bemorlar</h1>
+              <p className="text-muted-foreground">Bemorlar ro'yxatini boshqaring</p>
+            </div>
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Yangi bemor qo'shish
+            </Button>
           </div>
 
           <Card>
-          <CardHeader>
-            <CardTitle>Bemorlar ro'yxati</CardTitle>
-            <CardDescription>Bemorlarni qidiring va boshqaring</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Ism, telefon yoki manzil bo'yicha qidiring..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value)
-                    setPage(1)
-                  }}
-                  className="pl-8 max-w-sm"
-                />
-              </div>
-            </div>
-
-            {isLoading && (
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            )}
-
-            {error && (
-              <div className="text-center py-8">
-                <div className="text-destructive font-semibold mb-2">
-                  Bemorlarni yuklashda xatolik: {error.message || 'Noma'lum xatolik'}
+            <CardHeader>
+              <CardTitle>Bemorlar ro'yxati</CardTitle>
+              <CardDescription>Bemorlarni qidiring va boshqaring</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Ism, telefon yoki manzil bo'yicha qidiring..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value)
+                      setPage(1)
+                    }}
+                    className="pl-8 max-w-sm"
+                  />
                 </div>
-                {error.message?.includes('Database connection') && (
-                  <div className="text-sm text-muted-foreground space-y-2 mt-4">
-                    <p>Iltimos, tekshiring:</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Asosiy papkada <code className="bg-muted px-1 rounded">.env</code> faylini yarating</li>
-                      <li>PostgreSQL ulanish stringini bilan <code className="bg-muted px-1 rounded">DATABASE_URL</code> qo'shing</li>
-                      <li>PostgreSQL ishlayotganligiga ishonch hosil qiling</li>
-                      <li>Ma'lumotlar bazasini sozlash uchun <code className="bg-muted px-1 rounded">npm run db:migrate</code> ni ishga tushiring</li>
-                      <li>Prisma client'ni yaratish uchun <code className="bg-muted px-1 rounded">npm run db:generate</code> ni ishga tushiring</li>
-                    </ul>
+              </div>
+
+              {isLoading && (
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              )}
+
+              {error && (
+                <div className="text-center py-8">
+                  <div className="text-destructive font-semibold mb-2">
+                    Bemorlarni yuklashda xatolik: {error.message || 'Noma\'lum xatolik'}
                   </div>
-                )}
-              </div>
-            )}
+                  {error.message?.includes('Database connection') && (
+                    <div className="text-sm text-muted-foreground space-y-2 mt-4">
+                      <p>Iltimos, tekshiring:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Asosiy papkada <code className="bg-muted px-1 rounded">.env</code> faylini yarating</li>
+                        <li>PostgreSQL ulanish stringini bilan <code className="bg-muted px-1 rounded">DATABASE_URL</code> qo'shing</li>
+                        <li>PostgreSQL ishlayotganligiga ishonch hosil qiling</li>
+                        <li>Ma'lumotlar bazasini sozlash uchun <code className="bg-muted px-1 rounded">npm run db:migrate</code> ni ishga tushiring</li>
+                        <li>Prisma client'ni yaratish uchun <code className="bg-muted px-1 rounded">npm run db:generate</code> ni ishga tushiring</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {data && data.patients && data.patients.length === 0 && (
-              <div className="text-center py-12">
-                <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Bemorlar topilmadi</h3>
-                <p className="text-muted-foreground mb-4">
-                  {search ? 'Qidiruvni o\'zgartiring' : 'Yangi bemor qo\'shish orqali boshlang'}
-                </p>
-                {!search && (
-                  <Button onClick={() => setShowAddDialog(true)}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Bemor qo'shish
-                  </Button>
-                )}
-              </div>
-            )}
+              {data && data.patients && data.patients.length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Bemorlar topilmadi</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {search ? 'Qidiruvni o\'zgartiring' : 'Yangi bemor qo\'shish orqali boshlang'}
+                  </p>
+                  {!search && (
+                    <Button onClick={() => setShowAddDialog(true)}>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Bemor qo'shish
+                    </Button>
+                  )}
+                </div>
+              )}
 
-            {data && data.patients && data.patients.length > 0 && (
-              <>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>To'liq ism</TableHead>
-                        <TableHead>Tug'ilgan sana</TableHead>
-                        <TableHead>Telefon</TableHead>
-                        <TableHead>Manzil</TableHead>
-                        <TableHead>Kelishlar</TableHead>
-                        <TableHead className="text-right">Amallar</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.patients.map((patient) => (
-                        <motion.tr
-                          key={patient.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.2 }}
-                          onClick={() => handleShowPatientProfile(patient)}
-                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+              {data && data.patients && data.patients.length > 0 && (
+                <>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>To'liq ism</TableHead>
+                          <TableHead>Tug'ilgan sana</TableHead>
+                          <TableHead>Telefon</TableHead>
+                          <TableHead>Manzil</TableHead>
+                          <TableHead>Kelishlar</TableHead>
+                          <TableHead className="text-right">Amallar</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.patients.map((patient) => (
+                          <motion.tr
+                            key={patient.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => handleShowPatientProfile(patient)}
+                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          >
+                            <TableCell className="font-medium">
+                              {patient.fullName}
+                            </TableCell>
+                            <TableCell>{formatDate(patient.birthDate)}</TableCell>
+                            <TableCell>{patient.phone || '-'}</TableCell>
+                            <TableCell className="max-w-xs truncate">{patient.address}</TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary">{patient.visitCount}</Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditVisitClick(patient)}
+                                  className="h-6 w-6 p-0"
+                                  title="Kelishlar sonini tahrirlash"
+                                >
+                                  <Hash className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRegisterVisitClick(patient)}
+                                  title="Kelish qo'shish"
+                                >
+                                  <UserPlus className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(patient)}
+                                  title="Bemorni tahrirlash"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDeleteClick(patient.id)}
+                                  title="Bemorni o'chirish"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </motion.tr>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {data.pagination && (
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        {(page - 1) * limit + 1} dan {Math.min(page * limit, data.pagination.total)} gacha, jami{' '}
+                        {data.pagination.total} ta bemor
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1}
                         >
-                          <TableCell className="font-medium">
-                            {patient.fullName}
-                          </TableCell>
-                          <TableCell>{formatDate(patient.birthDate)}</TableCell>
-                          <TableCell>{patient.phone || '-'}</TableCell>
-                          <TableCell className="max-w-xs truncate">{patient.address}</TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary">{patient.visitCount}</Badge>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditVisitClick(patient)}
-                                className="h-6 w-6 p-0"
-                                title="Kelishlar sonini tahrirlash"
-                              >
-                                <Hash className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRegisterVisitClick(patient)}
-                                title="Kelish qo'shish"
-                              >
-                                <UserPlus className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(patient)}
-                                title="Bemorni tahrirlash"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteClick(patient.id)}
-                                title="Bemorni o'chirish"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </motion.tr>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {data.pagination && (
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      {(page - 1) * limit + 1} dan {Math.min(page * limit, data.pagination.total)} gacha, jami{' '}
-                      {data.pagination.total} ta bemor
+                          Oldingi
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage((p) => p + 1)}
+                          disabled={page >= data.pagination.totalPages}
+                        >
+                          Keyingi
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                      >
-                        Oldingi
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage((p) => p + 1)}
-                        disabled={page >= data.pagination.totalPages}
-                      >
-                        Keyingi
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Add Dialog */}
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Yangi bemor qo'shish</DialogTitle>
-            <DialogDescription>Quyida bemor ma'lumotlarini kiriting</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="fullName">To'liq ism</Label>
-                <Input
-                  id="fullName"
-                  required
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="birthDate">Tug'ilgan sana</Label>
-                <Input
-                  id="birthDate"
-                  type="date"
-                  required
-                  value={formData.birthDate}
-                  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Telefon raqami</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground px-2">+998</span>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Yangi bemor qo'shish</DialogTitle>
+              <DialogDescription>Quyida bemor ma'lumotlarini kiriting</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="fullName">To'liq ism</Label>
                   <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="901234567"
-                    value={formData.phone}
-                    onChange={(e) => {
-                      // Faqat raqamlarni qabul qilish
-                      const value = e.target.value.replace(/\D/g, '')
-                      // Maksimal 9 ta raqam
-                      const limitedValue = value.slice(0, 9)
-                      setFormData({ ...formData, phone: limitedValue })
-                    }}
-                    maxLength={9}
-                    className="flex-1"
+                    id="fullName"
+                    required
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   />
                 </div>
-                {formData.phone && (
-                  <p className="text-xs text-muted-foreground">+998{formData.phone}</p>
-                )}
+                <div className="grid gap-2">
+                  <Label htmlFor="birthDate">Tug'ilgan sana</Label>
+                  <Input
+                    id="birthDate"
+                    type="date"
+                    required
+                    value={formData.birthDate}
+                    onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Telefon raqami</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground px-2">+998</span>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="901234567"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        // Faqat raqamlarni qabul qilish
+                        const value = e.target.value.replace(/\D/g, '')
+                        // Maksimal 9 ta raqam
+                        const limitedValue = value.slice(0, 9)
+                        setFormData({ ...formData, phone: limitedValue })
+                      }}
+                      maxLength={9}
+                      className="flex-1"
+                    />
+                  </div>
+                  {formData.phone && (
+                    <p className="text-xs text-muted-foreground">+998{formData.phone}</p>
+                  )}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="address">Manzil</Label>
+                  <Textarea
+                    id="address"
+                    required
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    rows={3}
+                  />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="address">Manzil</Label>
-                <Textarea
-                  id="address"
-                  required
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
-                Bekor qilish
-              </Button>
-              <Button type="submit">Bemor qo'shish</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
+                  Bekor qilish
+                </Button>
+                <Button type="submit">Bemor qo'shish</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Bemorni tahrirlash</DialogTitle>
-            <DialogDescription>Quyida bemor ma'lumotlarini yangilang</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleUpdate}>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="editFullName">To'liq ism</Label>
-                <Input
-                  id="editFullName"
-                  required
-                  value={formData.fullName}
+        {/* Edit Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Bemorni tahrirlash</DialogTitle>
+              <DialogDescription>Quyida bemor ma'lumotlarini yangilang</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUpdate}>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="editFullName">To'liq ism</Label>
+                  <Input
+                    id="editFullName"
+                    required
+                    value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 />
               </div>
@@ -796,32 +796,32 @@ export default function PatientsPage() {
               O'chirish
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Visit Confirmation Dialog */}
-      <Dialog open={showVisitDialog} onOpenChange={setShowVisitDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Kelishni ro'yxatga olish</DialogTitle>
-            <DialogDescription>
-              <strong>{visitPatient?.fullName}</strong> uchun yangi kelishni ro'yxatga oling
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleRegisterVisit()
-            }}
-          >
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="visitReason">Kasallik nomi yoki kelish sababi *</Label>
-                <Textarea
-                  id="visitReason"
-                  required
-                  placeholder="Masalan: Tish og&apos;rig&apos;i, Tish tozalash, Konsultatsiya..."
-                  value={visitReason}
+        {/* Visit Confirmation Dialog */}
+        <Dialog open={showVisitDialog} onOpenChange={setShowVisitDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Kelishni ro'yxatga olish</DialogTitle>
+              <DialogDescription>
+                <strong>{visitPatient?.fullName}</strong> uchun yangi kelishni ro'yxatga oling
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleRegisterVisit()
+              }}
+            >
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="visitReason">Kasallik nomi yoki kelish sababi *</Label>
+                  <Textarea
+                    id="visitReason"
+                    required
+                    placeholder="Masalan: Tish og&apos;rig&apos;i, Tish tozalash, Konsultatsiya..."
+                    value={visitReason}
                   onChange={(e) => setVisitReason(e.target.value)}
                   rows={3}
                 />
@@ -851,20 +851,20 @@ export default function PatientsPage() {
               <Button type="submit">Kelishni ro'yxatga olish</Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Edit Visit Count Dialog */}
-      <Dialog open={showEditVisitDialog} onOpenChange={setShowEditVisitDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Kelishlar sonini tahrirlash</DialogTitle>
-            <DialogDescription>
-              <strong>{visitPatient?.fullName}</strong> uchun kelishlar sonini yangilang. Joriy son:{' '}
-              <strong>{visitPatient?.visitCount}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
+        {/* Edit Visit Count Dialog */}
+        <Dialog open={showEditVisitDialog} onOpenChange={setShowEditVisitDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Kelishlar sonini tahrirlash</DialogTitle>
+              <DialogDescription>
+                <strong>{visitPatient?.fullName}</strong> uchun kelishlar sonini yangilang. Joriy son:{' '}
+                <strong>{visitPatient?.visitCount}</strong>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="visitCount">Kelishlar soni</Label>
               <Input
@@ -893,35 +893,35 @@ export default function PatientsPage() {
               Kelishlar sonini yangilash
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      {/* Patient Profile Dialog */}
-      <Dialog open={showPatientProfileDialog} onOpenChange={setShowPatientProfileDialog}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Bemor Profili</DialogTitle>
-            <DialogDescription>
-              Bemorning barcha ma&apos;lumotlari va kasallik tarixi
-            </DialogDescription>
-          </DialogHeader>
-          
-          {visitPatient && (
-            <div className="space-y-6 py-4">
-              {/* Patient Information Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Shaxsiy Ma&apos;lumotlar
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">To&apos;liq Ism</Label>
-                      <p className="text-base font-medium">{visitPatient.fullName}</p>
-                    </div>
+        {/* Patient Profile Dialog */}
+        <Dialog open={showPatientProfileDialog} onOpenChange={setShowPatientProfileDialog}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Bemor Profili</DialogTitle>
+              <DialogDescription>
+                Bemorning barcha ma&apos;lumotlari va kasallik tarixi
+              </DialogDescription>
+            </DialogHeader>
+
+            {visitPatient && (
+              <div className="space-y-6 py-4">
+                {/* Patient Information Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Shaxsiy Ma&apos;lumotlar
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-sm text-muted-foreground">To&apos;liq Ism</Label>
+                        <p className="text-base font-medium">{visitPatient.fullName}</p>
+                      </div>
                     <div className="space-y-1">
                       <Label className="text-sm text-muted-foreground flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
@@ -991,8 +991,8 @@ export default function PatientsPage() {
               </Card>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
     </ProtectedRoute>
   )
