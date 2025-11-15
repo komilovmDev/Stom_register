@@ -89,8 +89,8 @@ export default function ReportsPage() {
       <DashboardLayout>
         <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Reports</h1>
-          <p className="text-muted-foreground">View patient statistics and analytics</p>
+          <h1 className="text-3xl font-bold">Hisobotlar</h1>
+          <p className="text-muted-foreground">Bemorlar statistikasi va tahlillarini ko‘ring</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
