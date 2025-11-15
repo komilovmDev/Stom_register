@@ -4,11 +4,12 @@ import { updatePatientSchema } from '@/lib/validations'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = await Promise.resolve(params)
     const patient = await prisma.patient.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!patient) {
@@ -30,9 +31,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = await Promise.resolve(params)
     const body = await request.json()
     const validatedData = updatePatientSchema.parse(body)
 
@@ -43,7 +45,7 @@ export async function PUT(
     if (validatedData.phone !== undefined) updateData.phone = validatedData.phone
 
     const patient = await prisma.patient.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     })
 
@@ -73,11 +75,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = await Promise.resolve(params)
     await prisma.patient.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Patient deleted successfully' })

@@ -34,4 +34,11 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-/prisma/migrations
+/prisma/*.db
+/prisma/*.db-journal
+# Keep migrations in git for deployment
+# /prisma/migrations
+
+# backups and exports
+/backups
+/exports

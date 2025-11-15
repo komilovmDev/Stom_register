@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 import { LogIn, Lock, User } from 'lucide-react'
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { login, isAuthenticated } = useAuth()
@@ -27,28 +27,30 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return // Debounce
+    
     setIsLoading(true)
 
     try {
-      const success = await login(username, password)
+      const success = await login(email, password)
 
       if (success) {
         toast({
-        title: 'Muvaffaqiyatli',
-        description: 'Muvaffaqiyatli kirildi!',
+          title: 'Muvaffaqiyatli',
+          description: 'Muvaffaqiyatli kirildi!',
         })
         router.push('/dashboard')
       } else {
         toast({
-        title: 'Xatolik',
-        description: 'Noto\'g\'ri foydalanuvchi nomi yoki parol',
+          title: 'Xatolik',
+          description: 'Noto\'g\'ri email yoki parol',
           variant: 'destructive',
         })
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Xatolik',
-        description: 'Kirish paytida xatolik yuz berdi',
+        description: error.message || 'Kirish paytida xatolik yuz berdi',
         variant: 'destructive',
       })
     } finally {
@@ -73,18 +75,18 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Foydalanuvchi nomi</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="Foydalanuvchi nomini kiriting"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Email manzilini kiriting"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="pl-9"
                   required
-                  autoComplete="username"
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -115,15 +117,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm font-semibold mb-2">Demo ma'lumotlar:</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p>• Username: <code className="bg-background px-1 rounded">admin</code> / Password: <code className="bg-background px-1 rounded">admin123</code></p>
-              <p>• Username: <code className="bg-background px-1 rounded">doctor</code> / Password: <code className="bg-background px-1 rounded">doctor123</code></p>
-              <p>• Username: <code className="bg-background px-1 rounded">user</code> / Password: <code className="bg-background px-1 rounded">user123</code></p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

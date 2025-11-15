@@ -1,30 +1,37 @@
 'use client'
 
+import useSWR from 'swr'
 import { DashboardLayout } from '@/components/dashboard/layout'
 import { ProtectedRoute } from '@/components/protected-route'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Activity, TrendingUp, Calendar } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || 'Failed to fetch')
+  }
+  return res.json()
+}
 
 export default function DashboardPage() {
-  // Get data from localStorage
-  const getPatientsData = () => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('patients')
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch {
-          return []
-        }
-      }
-    }
-    return []
-  }
-
-  const patients = getPatientsData()
+  // API'dan ma'lumotlarni olish
+  const { data, error, isLoading } = useSWR('/api/patients?page=1&limit=1000', fetcher)
+  
+  const patients = data?.patients || []
   const totalPatients = patients.length
   const totalVisits = patients.reduce((sum: number, p: any) => sum + (p.visitCount || 0), 0)
   const avgVisits = totalPatients > 0 ? (totalVisits / totalPatients).toFixed(1) : 0
+  
+  // Bu oy yangi bemorlar
+  const currentMonth = new Date().getMonth()
+  const currentYear = new Date().getFullYear()
+  const thisMonthPatients = patients.filter((p: any) => {
+    const createdDate = new Date(p.createdAt)
+    return createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear
+  }).length
 
   return (
     <ProtectedRoute>
@@ -42,7 +49,11 @@ export default function DashboardPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalPatients}</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="text-2xl font-bold">{totalPatients}</div>
+              )}
               <p className="text-xs text-muted-foreground">Ro'yxatdan o'tgan bemorlar</p>
             </CardContent>
           </Card>
@@ -53,7 +64,11 @@ export default function DashboardPage() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalVisits}</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="text-2xl font-bold">{totalVisits}</div>
+              )}
               <p className="text-xs text-muted-foreground">Barcha vaqt kelishlari</p>
             </CardContent>
           </Card>
@@ -64,7 +79,11 @@ export default function DashboardPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{avgVisits}</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="text-2xl font-bold">{avgVisits}</div>
+              )}
               <p className="text-xs text-muted-foreground">Har bir bemor uchun</p>
             </CardContent>
           </Card>
@@ -75,7 +94,11 @@ export default function DashboardPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">-</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="text-2xl font-bold">{thisMonthPatients}</div>
+              )}
               <p className="text-xs text-muted-foreground">Yangi bemorlar</p>
             </CardContent>
           </Card>

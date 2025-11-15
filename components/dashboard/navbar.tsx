@@ -29,12 +29,12 @@ export function Navbar() {
     setMounted(true)
   }, [])
 
-  const handleLogout = () => {
-    logout()
-      toast({
-        title: 'Muvaffaqiyatli',
-        description: 'Muvaffaqiyatli chiqildi',
-      })
+  const handleLogout = async () => {
+    await logout()
+    toast({
+      title: 'Muvaffaqiyatli',
+      description: 'Muvaffaqiyatli chiqildi',
+    })
     router.push('/login')
   }
 
@@ -90,9 +90,9 @@ export function Navbar() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
+                    <p className="text-sm font-medium leading-none">{user.name || 'Doctor'}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      @{user.username || 'user'}
+                      {user.email || 'doctor@clinic.com'}
                     </p>
                   </div>
                 </DropdownMenuLabel>

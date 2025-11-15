@@ -9,9 +9,10 @@ const updateVisitCountSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = await Promise.resolve(params)
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
@@ -20,14 +21,14 @@ export async function GET(
 
     const [visits, total] = await Promise.all([
       prisma.visit.findMany({
-        where: { patientId: params.id },
+        where: { patientId: id },
         skip,
         take: limit,
         orderBy: {
           visitDate: 'desc',
         },
       }),
-      prisma.visit.count({ where: { patientId: params.id } }),
+      prisma.visit.count({ where: { patientId: id } }),
     ])
 
     return NextResponse.json({
@@ -65,15 +66,16 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = await Promise.resolve(params)
     const body = await request.json()
     const validatedData = createVisitSchema.parse(body)
 
     // Check if patient exists
     const patient = await prisma.patient.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!patient) {
@@ -87,13 +89,13 @@ export async function POST(
     const [visit] = await Promise.all([
       prisma.visit.create({
         data: {
-          patientId: params.id,
+          patientId: id,
           reason: validatedData.reason,
           visitDate: validatedData.visitDate ? new Date(validatedData.visitDate) : new Date(),
         },
       }),
       prisma.patient.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           visitCount: {
             increment: 1,
@@ -112,8 +114,33 @@ export async function POST(
     }
 
     console.error('Error creating visit:', error)
+    
+    // Database connection errors
+    if (error.code === 'P1001' || error.message?.includes('Can\'t reach database server')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection failed',
+          details: 'Make sure database is running and DATABASE_URL is correctly configured'
+        },
+        { status: 503 }
+      )
+    }
+    
+    if (error.code === 'P1017' || error.message?.includes('Connection closed')) {
+      return NextResponse.json(
+        { 
+          error: 'Database connection closed',
+          details: 'Please check your database connection settings'
+        },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to register visit' },
+      { 
+        error: 'Failed to register visit',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     )
   }
@@ -121,14 +148,15 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    const { id } = await Promise.resolve(params)
     const body = await request.json()
     const validatedData = updateVisitCountSchema.parse(body)
 
     const patient = await prisma.patient.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         visitCount: validatedData.visitCount,
       },

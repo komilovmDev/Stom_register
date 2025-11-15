@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import useSWR from 'swr'
 import { motion } from 'framer-motion'
 import { DashboardLayout } from '@/components/dashboard/layout'
 import { Button } from '@/components/ui/button'
@@ -31,126 +32,18 @@ import { Patient, CreatePatientPayload, UpdatePatientPayload, PatientsResponse, 
 import { useToast } from '@/hooks/use-toast'
 import { ProtectedRoute } from '@/components/protected-route'
 
-// Mock data - vaqtinchalik frontend'da saqlanadi
-const generateId = () => Math.random().toString(36).substring(2, 15)
+// API fetcher function
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || 'Failed to fetch')
+  }
+  return res.json()
+}
 
-const initialMockPatients: Patient[] = [
-  {
-    id: generateId(),
-    fullName: 'Ali Valiyev',
-    birthDate: '1985-03-15',
-    address: 'Toshkent shahri, Yunusobod tumani, Navoiy ko\'chasi 12-uy',
-    visitCount: 3,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    visits: [
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Ro\'yxatdan o\'tish / Birinchi konsultatsiya',
-        visitDate: new Date('2024-01-15').toISOString(),
-        createdAt: new Date('2024-01-15').toISOString(),
-        updatedAt: new Date('2024-01-15').toISOString(),
-      },
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Tish og\'rig\'i',
-        visitDate: new Date('2024-02-20').toISOString(),
-        createdAt: new Date('2024-02-20').toISOString(),
-        updatedAt: new Date('2024-02-20').toISOString(),
-      },
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Tish tozalash',
-        visitDate: new Date('2024-03-10').toISOString(),
-        createdAt: new Date('2024-03-10').toISOString(),
-        updatedAt: new Date('2024-03-10').toISOString(),
-      },
-    ],
-  },
-  {
-    id: generateId(),
-    fullName: 'Dilshoda Karimova',
-    birthDate: '1992-07-22',
-    address: 'Toshkent shahri, Chilonzor tumani, Bunyodkor ko\'chasi 45-uy',
-    visitCount: 2,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    visits: [
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Ro\'yxatdan o\'tish / Birinchi konsultatsiya',
-        visitDate: new Date('2024-01-20').toISOString(),
-        createdAt: new Date('2024-01-20').toISOString(),
-        updatedAt: new Date('2024-01-20').toISOString(),
-      },
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Konsultatsiya',
-        visitDate: new Date('2024-02-25').toISOString(),
-        createdAt: new Date('2024-02-25').toISOString(),
-        updatedAt: new Date('2024-02-25').toISOString(),
-      },
-    ],
-  },
-  {
-    id: generateId(),
-    fullName: 'Otabek Toshmatov',
-    birthDate: '1988-11-08',
-    address: 'Toshkent shahri, Mirzo Ulug\'bek tumani, Amir Temur ko\'chasi 78-uy',
-    visitCount: 5,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    visits: [
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Ro\'yxatdan o\'tish / Birinchi konsultatsiya',
-        visitDate: new Date('2024-01-10').toISOString(),
-        createdAt: new Date('2024-01-10').toISOString(),
-        updatedAt: new Date('2024-01-10').toISOString(),
-      },
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Tish implantatsiyasi',
-        visitDate: new Date('2024-01-25').toISOString(),
-        createdAt: new Date('2024-01-25').toISOString(),
-        updatedAt: new Date('2024-01-25').toISOString(),
-      },
-      {
-        id: generateId(),
-        patientId: '',
-        reason: 'Kontrol tekshiruvi',
-        visitDate: new Date('2024-02-15').toISOString(),
-        createdAt: new Date('2024-02-15').toISOString(),
-        updatedAt: new Date('2024-02-15').toISOString(),
-      },
-    ],
-  },
-]
 
 export default function PatientsPage() {
-  // Local state bilan ishlash - API'siz
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    // localStorage'dan o'qish yoki initial mock data
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('patients')
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch {
-          return initialMockPatients
-        }
-      }
-    }
-    return initialMockPatients
-  })
-
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null)
@@ -175,153 +68,217 @@ export default function PatientsPage() {
 
   const limit = 10
 
-  // localStorage'ga saqlash
+  // API'dan ma'lumotlarni olish
+  const apiUrl = `/api/patients?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`
+  const { data, error, isLoading, mutate } = useSWR<PatientsResponse>(apiUrl, fetcher, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+  })
+
+  const patients = data?.patients || []
+  const pagination = data?.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 }
+
+  // Search o'zgarganda page'ni 1 ga qaytarish
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('patients', JSON.stringify(patients))
+    if (search && page !== 1) {
+      setPage(1)
     }
-  }, [patients])
+  }, [search])
 
-  // Filter va pagination
-  const filteredPatients = useMemo(() => {
-    let filtered = patients
-    if (search) {
-      filtered = patients.filter((p) =>
-        p.fullName.toLowerCase().includes(search.toLowerCase()) ||
-        p.phone?.includes(search) ||
-        p.address.toLowerCase().includes(search.toLowerCase())
-      )
-    }
-    return filtered
-  }, [patients, search])
-
-  const paginatedPatients = useMemo(() => {
-    const start = (page - 1) * limit
-    return filteredPatients.slice(start, start + limit)
-  }, [filteredPatients, page, limit])
-
-  const totalPages = Math.ceil(filteredPatients.length / limit)
-
-  // Mock data response
-  const data: PatientsResponse = {
-    patients: paginatedPatients,
-    pagination: {
-      page,
-      limit,
-      total: filteredPatients.length,
-      totalPages,
-    },
-  }
-
-  const isLoading = false
-  const error: any = null
+  const [isCreating, setIsCreating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isCreating) return // Debounce
+    
+    setIsCreating(true)
     try {
-      const phoneValue = formData.phone ? `+998${formData.phone}` : undefined
-      const newPatient: Patient = {
-        id: generateId(),
+      // Telefon raqamini to'g'ri formatlash
+      let phoneValue: string | undefined = undefined
+      if (formData.phone && formData.phone.trim()) {
+        const phone = formData.phone.trim()
+        if (phone.startsWith('+998')) {
+          phoneValue = phone
+        } else {
+          const digitsOnly = phone.replace(/\D/g, '')
+          if (digitsOnly.length === 9) {
+            phoneValue = `+998${digitsOnly}`
+          } else if (digitsOnly.length > 0) {
+            throw new Error('Telefon raqami 9 ta raqamdan iborat bo\'lishi kerak')
+          }
+        }
+      }
+      
+      const payload: CreatePatientPayload = {
         fullName: formData.fullName,
         birthDate: formData.birthDate,
         address: formData.address,
         phone: phoneValue,
-        visitCount: 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        visits: [
-          {
-            id: generateId(),
-            patientId: '',
-            reason: 'Ro\'yxatdan o\'tish / Birinchi konsultatsiya',
-            visitDate: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ],
       }
 
-      setPatients([newPatient, ...patients])
+      const res = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to create patient')
+      }
+
+      const newPatient = await res.json()
       setFormData({ fullName: '', birthDate: '', address: '', phone: '' })
       setShowAddDialog(false)
+      
+      // Ma'lumotlarni yangilash
+      mutate()
+      
       toast({
         title: 'Muvaffaqiyatli',
         description: 'Bemor muvaffaqiyatli ro\'yxatga olindi',
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating patient:', error)
       toast({
         title: 'Xatolik',
-        description: 'Bemorni yaratishda xatolik yuz berdi',
+        description: error.message || 'Bemorni yaratishda xatolik yuz berdi',
         variant: 'destructive',
       })
+    } finally {
+      setIsCreating(false)
     }
   }
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingPatient) return
+    if (!editingPatient || isUpdating) return // Debounce
 
+    setIsUpdating(true)
     try {
-      setPatients(
-        patients.map((p) =>
-          p.id === editingPatient.id
-            ? {
-                ...p,
-                fullName: formData.fullName,
-                birthDate: formData.birthDate,
-                address: formData.address,
-                phone: formData.phone ? `+998${formData.phone}` : undefined,
-                updatedAt: new Date().toISOString(),
-              }
-            : p
-        )
-      )
+      // Telefon raqamini to'g'ri formatlash
+      let phoneValue: string | undefined = undefined
+      if (formData.phone && formData.phone.trim()) {
+        const phone = formData.phone.trim()
+        // Agar allaqachon +998 bilan boshlansa, o'zgartirmaslik
+        if (phone.startsWith('+998')) {
+          phoneValue = phone
+        } else {
+          // Faqat raqamlarni olish va +998 qo'shish
+          const digitsOnly = phone.replace(/\D/g, '')
+          if (digitsOnly.length === 9) {
+            phoneValue = `+998${digitsOnly}`
+          } else if (digitsOnly.length > 0) {
+            // Agar 9 ta raqam bo'lmasa, xatolik
+            throw new Error('Telefon raqami 9 ta raqamdan iborat bo\'lishi kerak')
+          }
+        }
+      }
+      
+      const payload: UpdatePatientPayload = {
+        fullName: formData.fullName,
+        birthDate: formData.birthDate,
+        address: formData.address,
+        phone: phoneValue,
+      }
+
+      const res = await fetch(`/api/patients/${editingPatient.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        let errorMessage = errorData.error || 'Failed to update patient'
+        
+        // Validation error'larni batafsil ko'rsatish
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const validationErrors = errorData.details
+            .map((err: any) => `${err.path.join('.')}: ${err.message}`)
+            .join(', ')
+          errorMessage = `Validation error: ${validationErrors}`
+        }
+        
+        throw new Error(errorMessage)
+      }
 
       setShowEditDialog(false)
       setEditingPatient(null)
       setFormData({ fullName: '', birthDate: '', address: '', phone: '' })
+      
+      // Ma'lumotlarni yangilash
+      mutate()
+      
       toast({
         title: 'Muvaffaqiyatli',
         description: 'Bemor ma\'lumotlari muvaffaqiyatli yangilandi',
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating patient:', error)
       toast({
         title: 'Xatolik',
-        description: 'Bemor ma\'lumotlarini yangilashda xatolik yuz berdi',
+        description: error.message || 'Bemor ma\'lumotlarini yangilashda xatolik yuz berdi',
         variant: 'destructive',
       })
+    } finally {
+      setIsUpdating(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!deletingPatientId) return
+    if (!deletingPatientId || isDeleting) return // Debounce
 
+    setIsDeleting(true)
     try {
-      setPatients(patients.filter((p) => p.id !== deletingPatientId))
+      const res = await fetch(`/api/patients/${deletingPatientId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to delete patient')
+      }
+
       setShowDeleteDialog(false)
       setDeletingPatientId(null)
+      
+      // Ma'lumotlarni yangilash
+      mutate()
+      
       toast({
         title: 'Muvaffaqiyatli',
         description: 'Bemor muvaffaqiyatli o\'chirildi',
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting patient:', error)
       toast({
         title: 'Xatolik',
-        description: 'Bemorni o\'chirishda xatolik yuz berdi',
+        description: error.message || 'Bemorni o\'chirishda xatolik yuz berdi',
         variant: 'destructive',
       })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   const handleRegisterVisitClick = (patient: Patient) => {
     setVisitPatient(patient)
+    // Default sana va vaqt - hozirgi vaqt
+    const now = new Date()
+    const dateStr = now.toISOString().split('T')[0]
+    const timeStr = now.toTimeString().split(' ')[0].substring(0, 5)
+    setVisitDate(`${dateStr}T${timeStr}`)
     setShowVisitDialog(true)
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const handleRegisterVisit = async () => {
+    if (isSubmitting) return // Debounce
+    
     if (!visitPatient || !visitReason.trim()) {
       toast({
         title: 'Xatolik',
@@ -331,44 +288,81 @@ export default function PatientsPage() {
       return
     }
 
+    if (!visitDate || !visitDate.trim()) {
+      toast({
+        title: 'Xatolik',
+        description: 'Sana kiritilishi majburiy',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsSubmitting(true)
     try {
-      const newVisit: Visit = {
-        id: generateId(),
-        patientId: visitPatient.id,
-        reason: visitReason,
-        visitDate: visitDate ? new Date(visitDate).toISOString() : new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      // Sana va vaqt formatini tekshirish va to'g'rilash
+      let formattedDate = visitDate.trim()
+      
+      // Agar ISO format bo'lsa (YYYY-MM-DDTHH:mm), to'g'ri formatda
+      if (formattedDate.includes('T')) {
+        // Sana va vaqtni ajratish
+        const [datePart, timePart] = formattedDate.split('T')
+        if (!datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          throw new Error('Sana noto\'g\'ri formatda. YYYY-MM-DD formatida kiriting')
+        }
+        // Vaqtni to'g'rilash (HH:mm formatida)
+        if (timePart) {
+          const time = timePart.substring(0, 5) // HH:mm qismini olish
+          if (!time.match(/^\d{2}:\d{2}$/)) {
+            throw new Error('Vaqt noto\'g\'ri formatda. HH:mm formatida kiriting')
+          }
+          formattedDate = `${datePart}T${time}:00`
+        } else {
+          formattedDate = datePart
+        }
+      } else if (!formattedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        throw new Error('Sana noto\'g\'ri formatda. YYYY-MM-DD formatida kiriting')
+      }
+      
+      const payload: CreateVisitPayload = {
+        reason: visitReason.trim(),
+        visitDate: formattedDate,
       }
 
-      setPatients(
-        patients.map((p) =>
-          p.id === visitPatient.id
-            ? {
-                ...p,
-                visitCount: p.visitCount + 1,
-                visits: [newVisit, ...(p.visits || [])],
-                updatedAt: new Date().toISOString(),
-              }
-            : p
-        )
-      )
+      const res = await fetch(`/api/patients/${visitPatient.id}/visit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to register visit')
+      }
 
       setShowVisitDialog(false)
       setVisitPatient(null)
       setVisitReason('')
       setVisitDate('')
+      
+      // Ma'lumotlarni yangilash
+      mutate() // Patients list'ni yangilash
+      
+      // VisitHistory komponentini yangilash
+      window.dispatchEvent(new Event('visitAdded'))
+      
       toast({
         title: 'Muvaffaqiyatli',
         description: 'Kelish muvaffaqiyatli ro\'yxatga olindi',
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error registering visit:', error)
       toast({
         title: 'Xatolik',
-        description: 'Kelishni ro\'yxatga olishda xatolik yuz berdi',
+        description: error.message || 'Kelishni ro\'yxatga olishda xatolik yuz berdi',
         variant: 'destructive',
       })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -420,10 +414,23 @@ export default function PatientsPage() {
     setEditingPatient(patient)
     // Telefon raqamidan +998 ni olib tashlash
     const phoneWithoutPrefix = patient.phone?.replace(/^\+998/, '') || ''
+    
+    // birthDate'ni to'g'ri formatlash
+    let birthDateFormatted = ''
+    if (patient.birthDate) {
+      if (typeof patient.birthDate === 'string') {
+        birthDateFormatted = patient.birthDate.split('T')[0]
+      } else {
+        // Agar Date object bo'lsa
+        const date = new Date(patient.birthDate)
+        birthDateFormatted = date.toISOString().split('T')[0]
+      }
+    }
+    
     setFormData({
-      fullName: patient.fullName,
-      birthDate: patient.birthDate.split('T')[0],
-      address: patient.address,
+      fullName: patient.fullName || '',
+      birthDate: birthDateFormatted,
+      address: patient.address || '',
       phone: phoneWithoutPrefix,
     })
     setShowEditDialog(true)
@@ -700,7 +707,9 @@ export default function PatientsPage() {
                 <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>
                   Bekor qilish
                 </Button>
-                <Button type="submit">Bemor qo'shish</Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? 'Saqlanmoqda...' : 'Bemor qo\'shish'}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -773,7 +782,9 @@ export default function PatientsPage() {
               <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
                 Bekor qilish
               </Button>
-              <Button type="submit">Bemorni yangilash</Button>
+              <Button type="submit" disabled={isUpdating}>
+                {isUpdating ? 'Yangilanmoqda...' : 'Bemorni yangilash'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -792,8 +803,8 @@ export default function PatientsPage() {
             <Button type="button" variant="outline" onClick={() => setShowDeleteDialog(false)}>
               Bekor qilish
             </Button>
-            <Button type="button" variant="destructive" onClick={handleDelete}>
-              O'chirish
+            <Button type="button" variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? 'O\'chirilmoqda...' : 'O\'chirish'}
             </Button>
           </DialogFooter>
           </DialogContent>
@@ -827,13 +838,61 @@ export default function PatientsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="visitDate">Sana (ixtiyoriy)</Label>
-                <Input
-                  id="visitDate"
-                  type="date"
-                  value={visitDate}
-                  onChange={(e) => setVisitDate(e.target.value)}
-                />
+                <Label htmlFor="visitDate">
+                  Sana va vaqt * 
+                  <span className="text-xs text-muted-foreground ml-2">(Masalan: 2025-11-15)</span>
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="visitDate"
+                    type="date"
+                    value={visitDate.includes('T') ? visitDate.split('T')[0] : visitDate}
+                    onChange={(e) => {
+                      const date = e.target.value
+                      const time = visitDate.includes('T') ? visitDate.split('T')[1] : ''
+                      if (time) {
+                        setVisitDate(`${date}T${time}`)
+                      } else {
+                        setVisitDate(date)
+                      }
+                    }}
+                    required
+                    className="flex-1"
+                  />
+                  <Input
+                    id="visitTime"
+                    type="time"
+                    value={visitDate.includes('T') ? visitDate.split('T')[1]?.substring(0, 5) : ''}
+                    onChange={(e) => {
+                      const time = e.target.value
+                      const date = visitDate.includes('T') ? visitDate.split('T')[0] : visitDate || new Date().toISOString().split('T')[0]
+                      if (time) {
+                        setVisitDate(`${date}T${time}`)
+                      } else {
+                        setVisitDate(date)
+                      }
+                    }}
+                    className="w-32"
+                  />
+                </div>
+                {visitDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Tanlangan: {(() => {
+                      try {
+                        const dateStr = visitDate.includes('T') ? visitDate : `${visitDate}T00:00`
+                        return new Date(dateStr).toLocaleString('uz-UZ', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      } catch {
+                        return visitDate
+                      }
+                    })()}
+                  </p>
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -848,7 +907,9 @@ export default function PatientsPage() {
               >
                 Bekor qilish
               </Button>
-              <Button type="submit">Kelishni ro'yxatga olish</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saqlanmoqda...' : 'Kelishni ro\'yxatga olish'}
+              </Button>
             </DialogFooter>
           </form>
           </DialogContent>
@@ -955,19 +1016,31 @@ export default function PatientsPage() {
                     <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
                       <div>
                         <span className="font-medium">Yaratilgan:</span>{' '}
-                        {new Date(visitPatient.createdAt).toLocaleDateString('uz-UZ', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
+                        {(() => {
+                          const date = new Date(visitPatient.createdAt)
+                          const year = date.getFullYear()
+                          const day = date.getDate()
+                          const monthNames = [
+                            'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
+                            'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'
+                          ]
+                          const monthName = monthNames[date.getMonth()]
+                          return `${year}-yil ${day}-${monthName}`
+                        })()}
                       </div>
                       <div>
                         <span className="font-medium">Yangilangan:</span>{' '}
-                        {new Date(visitPatient.updatedAt).toLocaleDateString('uz-UZ', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
+                        {(() => {
+                          const date = new Date(visitPatient.updatedAt)
+                          const year = date.getFullYear()
+                          const day = date.getDate()
+                          const monthNames = [
+                            'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
+                            'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'
+                          ]
+                          const monthName = monthNames[date.getMonth()]
+                          return `${year}-yil ${day}-${monthName}`
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -986,7 +1059,11 @@ export default function PatientsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <VisitHistory patientId={visitPatient.id} patients={patients} />
+                  <VisitHistory 
+                    patientId={visitPatient.id} 
+                    patients={patients}
+                    key={visitPatient.id}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -999,20 +1076,60 @@ export default function PatientsPage() {
 }
 
 // Visit History Component
-function VisitHistory({ patientId, patients }: { patientId: string; patients: Patient[] }) {
-  const patient = patients.find((p) => p.id === patientId)
-  const visits = patient?.visits || []
-  const isLoading = false
-  const error: any = null
+function VisitHistory({ 
+  patientId, 
+  patients
+}: { 
+  patientId: string
+  patients: Patient[]
+}) {
+  // API'dan visit'larni olish
+  const { data: visitsData, error, isLoading, mutate: mutateVisits } = useSWR<VisitsResponse>(
+    patientId ? `/api/patients/${patientId}/visit?page=1&limit=100` : null,
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 0, // Auto-refresh o'chirilgan
+    }
+  )
+  
+  const visits = visitsData?.visits || []
+  
+  // Visit qo'shilgandan keyin yangilash uchun global event listener
+  useEffect(() => {
+    const handleVisitAdded = () => {
+      mutateVisits()
+    }
+    
+    // Custom event listener
+    window.addEventListener('visitAdded', handleVisitAdded)
+    
+    return () => {
+      window.removeEventListener('visitAdded', handleVisitAdded)
+    }
+  }, [mutateVisits])
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('uz-UZ', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    try {
+      const date = new Date(dateString)
+      const year = date.getFullYear()
+      const day = date.getDate()
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      
+      // Oyni nomi bilan olish
+      const monthNames = [
+        'yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun',
+        'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'
+      ]
+      const monthName = monthNames[date.getMonth()]
+      
+      // Format: 2025-yil 15-noyabr soat: 15:58
+      return `${year}-yil ${day}-${monthName} soat: ${hours}:${minutes}`
+    } catch {
+      return dateString
+    }
   }
 
   if (isLoading) {

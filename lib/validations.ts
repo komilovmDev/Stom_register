@@ -16,7 +16,7 @@ export const updatePatientSchema = z.object({
 
 export const createVisitSchema = z.object({
   reason: z.string().min(1, 'Kasallik nomi yoki kelish sababi kiritilishi kerak').max(500, 'Sabab juda uzun'),
-  visitDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD').optional(),
+  visitDate: z.string().regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/, 'Sana kiritilishi kerak (YYYY-MM-DD yoki YYYY-MM-DDTHH:mm formatida)'),
 })
 
 export const updateVisitSchema = z.object({

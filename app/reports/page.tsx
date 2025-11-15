@@ -1,5 +1,6 @@
 'use client'
 
+import useSWR from 'swr'
 import { DashboardLayout } from '@/components/dashboard/layout'
 import { ProtectedRoute } from '@/components/protected-route'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,25 +8,20 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { TrendingUp, Users, Activity } from 'lucide-react'
 
-export default function ReportsPage() {
-  // Get data from localStorage
-  const getPatientsData = () => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('patients')
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch {
-          return []
-        }
-      }
-    }
-    return []
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || 'Failed to fetch')
   }
+  return res.json()
+}
 
-  const patients: any[] = getPatientsData()
-  const isLoading = false
-  const error: any = null
+export default function ReportsPage() {
+  // API'dan ma'lumotlarni olish
+  const { data, error, isLoading } = useSWR('/api/patients?page=1&limit=1000', fetcher)
+  
+  const patients: any[] = data?.patients || []
 
   const topPatients = patients
     .sort((a: any, b: any) => b.visitCount - a.visitCount)
