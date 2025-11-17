@@ -80,9 +80,13 @@ export default function PatientsPage() {
 
   // Search o'zgarganda page'ni 1 ga qaytarish
   useEffect(() => {
+    // Only run in browser (not during SSR/build)
+    if (typeof window === 'undefined') return
+    
     if (search && page !== 1) {
       setPage(1)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
   const [isCreating, setIsCreating] = useState(false)
@@ -381,30 +385,22 @@ export default function PatientsPage() {
     if (!visitPatient) return
 
     try {
-      setPatients(
-        patients.map((p) =>
-          p.id === visitPatient.id
-            ? {
-                ...p,
-                visitCount: visitCount,
-                updatedAt: new Date().toISOString(),
-              }
-            : p
-        )
-      )
-
+      // Visit count is calculated from visits, so we just refresh the data
+      // The visit count should be updated by adding/removing visits through the API
+      mutate() // Refresh patients list from server
+      
       setShowEditVisitDialog(false)
       setVisitPatient(null)
       setVisitCount(0)
       toast({
         title: 'Muvaffaqiyatli',
-        description: 'Kelishlar soni muvaffaqiyatli yangilandi',
+        description: 'Ma\'lumotlar yangilandi',
       })
     } catch (error) {
       console.error('Error updating visit count:', error)
       toast({
         title: 'Xatolik',
-        description: 'Kelishlar sonini yangilashda xatolik yuz berdi',
+        description: 'Ma\'lumotlarni yangilashda xatolik yuz berdi',
         variant: 'destructive',
       })
     }

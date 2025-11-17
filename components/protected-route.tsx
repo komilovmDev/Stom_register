@@ -9,8 +9,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
+    // Only run in browser (not during SSR/build)
+    if (typeof window === 'undefined') return
+    
     if (!isLoading && !isAuthenticated) {
-      router.push('/login')
+      router.replace('/login')
     }
   }, [isAuthenticated, isLoading, router])
 

@@ -25,35 +25,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata?.name || 'Doctor',
-        })
-      }
+    // Only run in browser (not during SSR/build)
+    if (typeof window === 'undefined') {
       setIsLoading(false)
-    })
+      return
+    }
+
+    let isMounted = true
+    let subscription: { unsubscribe: () => void } | null = null
+
+    // Check current session
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (!isMounted) return
+        
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || 'Doctor',
+          })
+        }
+        setIsLoading(false)
+      })
+      .catch((error) => {
+        console.error('Error getting session:', error)
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      })
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata?.name || 'Doctor',
-        })
-      } else {
-        setUser(null)
+    try {
+      const {
+        data: { subscription: authSubscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!isMounted) return
+        
+        if (session?.user) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.name || 'Doctor',
+          })
+        } else {
+          setUser(null)
+        }
+        setIsLoading(false)
+      })
+      subscription = authSubscription
+    } catch (error) {
+      console.error('Error setting up auth state listener:', error)
+      if (isMounted) {
+        setIsLoading(false)
       }
-      setIsLoading(false)
-    })
+    }
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+    }
   }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {

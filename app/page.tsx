@@ -1,22 +1,35 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
 
 export default function Home() {
   const router = useRouter()
   const { isAuthenticated, isLoading } = useAuth()
+  const [hasRedirected, setHasRedirected] = useState(false)
 
   useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
-        router.push('/dashboard')
-      } else {
-        router.push('/login')
+    // Only redirect once, prevent infinite loops
+    if (hasRedirected || isLoading) return
+
+    // Only run in browser (not during SSR/build)
+    if (typeof window === 'undefined') return
+
+    // Small delay to prevent race conditions
+    const timer = setTimeout(() => {
+      if (!hasRedirected) {
+        setHasRedirected(true)
+        if (isAuthenticated) {
+          router.replace('/dashboard')
+        } else {
+          router.replace('/login')
+        }
       }
-    }
-  }, [isAuthenticated, isLoading, router])
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [isAuthenticated, isLoading, router, hasRedirected])
 
   return (
     <div className="min-h-screen flex items-center justify-center">

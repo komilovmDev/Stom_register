@@ -19,9 +19,12 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
+    // Only run in browser (not during SSR/build)
+    if (typeof window === 'undefined') return
+    
     // If already authenticated, redirect to dashboard
     if (isAuthenticated) {
-      router.push('/dashboard')
+      router.replace('/dashboard')
     }
   }, [isAuthenticated, router])
 
